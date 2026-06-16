@@ -2,74 +2,131 @@ CREATE DATABASE IF NOT EXISTS water_monitor;
 
 USE water_monitor;
 
+-- ==========================
+-- LECTURAS
+-- ==========================
+
 CREATE TABLE lecturas (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     ph FLOAT NOT NULL,
-
     tds FLOAT NOT NULL,
-
     ce FLOAT NOT NULL,
-
     temperatura FLOAT NOT NULL
 );
+
+-- ==========================
+-- CLASIFICACIONES
+-- ==========================
 
 CREATE TABLE clasificaciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-    lectura_id INT,
+    lectura_id INT NOT NULL,
 
-    calidad VARCHAR(20),
-
-    confianza FLOAT,
+    calidad VARCHAR(20) NOT NULL,
+    confianza FLOAT NOT NULL,
 
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
 
+    CONSTRAINT fk_clasificaciones_lecturas
     FOREIGN KEY (lectura_id)
     REFERENCES lecturas(id)
+    ON DELETE CASCADE
 );
+
+-- ==========================
+-- ALERTAS
+-- ==========================
 
 CREATE TABLE alertas (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-    lectura_id INT,
+    lectura_id INT NOT NULL,
 
-    tipo VARCHAR(50),
-
-    mensaje TEXT,
-
-    gravedad VARCHAR(20),
+    tipo VARCHAR(50) NOT NULL,
+    mensaje TEXT NOT NULL,
+    gravedad VARCHAR(20) NOT NULL,
 
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
 
+    CONSTRAINT fk_alertas_lecturas
     FOREIGN KEY (lectura_id)
     REFERENCES lecturas(id)
+    ON DELETE CASCADE
 );
+
+-- ==========================
+-- ESTADO DEL FILTRO
+-- ==========================
 
 CREATE TABLE estado_filtro (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
+    lectura_id INT NOT NULL,
+
+    vida_util FLOAT NOT NULL,
+    score_desgaste FLOAT NOT NULL,
+
+    observacion TEXT,
+
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    vida_util FLOAT,
-
-    score_desgaste FLOAT,
-
-    observacion TEXT
+    CONSTRAINT fk_estado_filtro_lecturas
+    FOREIGN KEY (lectura_id)
+    REFERENCES lecturas(id)
+    ON DELETE CASCADE
 );
+
+-- ==========================
+-- REFERENCIA DEL SISTEMA
+-- ==========================
 
 CREATE TABLE referencia_sistema (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-    ph FLOAT,
-
-    tds FLOAT,
-
-    ce FLOAT,
-
-    temperatura FLOAT,
+    ph FLOAT NOT NULL,
+    tds FLOAT NOT NULL,
+    ce FLOAT NOT NULL,
+    temperatura FLOAT NOT NULL,
 
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO referencia_sistema
+(
+    ph,
+    tds,
+    ce,
+    temperatura
+)
+VALUES
+(
+    7.0,
+    120,
+    250,
+    25
+);
+
+-- ==========================
+-- REFERENCIA DE LOTES
+-- ==========================
+
+CREATE TABLE lotes(
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    fecha_inicio DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    fecha_fin DATETIME NULL,
+
+    volumen_litros FLOAT NOT NULL,
+
+    estado VARCHAR(20) DEFAULT 'ACTIVO',
+
+    decision VARCHAR(20) DEFAULT NULL,
+
+    observaciones TEXT
 );

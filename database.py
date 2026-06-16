@@ -11,7 +11,13 @@ def get_connection():
         database='water_monitor'
     )
 
-def insert_reading(ph, tds, ce, temp):
+def insert_reading(
+    lot_id,
+    ph,
+    tds,
+    ce,
+    temp
+):
 
     conn = get_connection()
 
@@ -19,11 +25,29 @@ def insert_reading(ph, tds, ce, temp):
 
     cur.execute("""
         INSERT INTO lecturas
-        (ph,tds,ce,temperatura)
-
-        VALUES (?,?,?,?)
+        (
+            lote_id,
+            ph,
+            tds,
+            ce,
+            temperatura
+        )
+        VALUES
+        (
+            ?,
+            ?,
+            ?,
+            ?,
+            ?
+        )
     """,
-    (ph,tds,ce,temp))
+    (
+        lot_id,
+        ph,
+        tds,
+        ce,
+        temp
+    ))
 
     conn.commit()
 
@@ -129,3 +153,157 @@ def save_alert(
 
     cur.close()
     conn.close()
+
+def create_lot(volume):
+
+    conn = get_connection()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO lotes
+        (
+            volumen_litros
+        )
+        VALUES
+        (
+            ?
+        )
+    """,
+    (volume,)
+    )
+
+    conn.commit()
+
+    lot_id = cur.lastrowid
+
+    cur.close()
+    conn.close()
+
+    return lot_id
+
+
+def close_lot(
+    lot_id,
+    decision,
+    observations=""
+):
+
+    conn = get_connection()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE lotes
+        SET
+            fecha_fin = NOW(),
+            estado = 'FINALIZADO',
+            decision = ?,
+            observaciones = ?
+        WHERE id = ?
+    """,
+    (
+        decision,
+        observations,
+        lot_id
+    ))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+
+def get_lot_stats(lot_id):
+
+    conn = get_connection()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            AVG(ph),
+            AVG(tds),
+            AVG(ce),
+            COUNT(*)
+        FROM lecturas
+        WHERE lote_id = ?
+    """,
+    (lot_id,)
+    )
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return {
+        "avg_ph": row[0],
+        "avg_tds": row[1],
+        "avg_ce": row[2],
+        "samples": row[3]
+    }
+
+
+def save_filter_state(
+    lectura_id,
+    vida_util,
+    score_desgaste,
+    observacion=""
+):
+
+    conn = get_connection()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO estado_filtro
+        (
+            lectura_id,
+            vida_util,
+            score_desgaste,
+            observacion
+        )
+        VALUES
+        (
+            ?,
+            ?,
+            ?,
+            ?
+        )
+    """,
+    (
+        lectura_id,
+        vida_util,
+        score_desgaste,
+        observacion
+    ))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+def get_last_filter_health():
+
+    conn = get_connection()
+
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT vida_util
+        FROM estado_filtro
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if row:
+        return row[0]
+
+    return 100.0
