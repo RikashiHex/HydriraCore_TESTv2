@@ -18,19 +18,30 @@ from classifier import classify
 from filter_health import calculate_filter_health
 from anomaly_detector import detect_anomaly
 
+
+# =====================================================
+# INICIO DEL SISTEMA
+# =====================================================
+
 lot_id = create_lot(50)
 
 reading_counter = 0
 
 while True:
 
-    # Obtener datos (simulados por ahora)
+    # =================================================
+    # OBTENER DATOS DEL SENSOR / SIMULADOR
+    # =================================================
+
     data = read_data()
 
     if not data:
         continue
 
-    # Guardar lectura en BD
+    # =================================================
+    # GUARDAR LECTURA
+    # =================================================
+
     reading_id = insert_reading(
         lot_id,
         data["ph"],
@@ -39,17 +50,85 @@ while True:
         data["temp"]
     )
 
-    # Clasificar calidad
+    # =================================================
+    # CLASIFICAR CALIDAD DEL AGUA
+    # =================================================
+
     quality, confidence = classify(
         data["ph"],
         data["tds"],
         data["ce"]
     )
+
     save_classification(
         reading_id,
         quality,
         confidence
     )
+
+    # =================================================
+    # OBTENER REFERENCIA DEL SISTEMA
+    # =================================================
+
+    ref = get_reference()
+
+    # V2
+    # Protección por si la tabla referencia_sistema está vacía
+
+    if ref is None:
+
+        print(
+            "ERROR: No existe referencia_sistema"
+        )
+
+        time.sleep(5)
+
+        continue
+
+    ref_ph = ref[0]
+    ref_tds = ref[1]
+    ref_ce = ref[2]
+
+    # =================================================
+    # DETECCIÓN DE ANOMALÍAS
+    # =================================================
+
+    alerts = detect_anomaly(
+        data["ph"],
+        data["tds"],
+        data["ce"],
+        ref_ph,
+        ref_tds,
+        ref_ce
+    )
+
+    # =================================================
+    # V2 - CÁLCULO ACUMULATIVO DE VIDA ÚTIL
+    # =================================================
+
+    previous_health = get_last_filter_health()
+
+    health, wear_score = calculate_filter_health(
+        previous_health,
+        data["ph"],
+        data["tds"],
+        data["ce"],
+        ref_ph,
+        ref_tds,
+        ref_ce,
+        len(alerts)
+    )
+
+    save_filter_state(
+        reading_id,
+        health,
+        wear_score,
+        "Calculo V2"
+    )
+
+    # =================================================
+    # MOSTRAR INFORMACIÓN
+    # =================================================
 
     print("\n-------------------")
     print(f"Lectura ID: {reading_id}")
@@ -59,40 +138,13 @@ while True:
     print(f"Temp: {data['temp']}")
     print(f"Calidad: {quality}")
 
-    # Obtener referencia del sistema
-    ref = get_reference()
-
-    ref_ph = ref[0]
-    ref_tds = ref[1]
-    ref_ce = ref[2]
-
-    health, wear_score = calculate_filter_health(
-        data["ph"],
-        data["tds"],
-        data["ce"],
-        ref_ph,
-        ref_tds,
-        ref_ce
-    )
-
-    save_filter_state(
-        reading_id,
-        health,
-        wear_score,
-        "Calculo V1"
-    )
+    # V2
     print(f"Vida útil filtro: {health}%")
     print(f"Desgaste: {wear_score}")
 
-    # Detectar anomalías
-    alerts = detect_anomaly(
-        data["ph"],
-        data["tds"],
-        data["ce"],
-        ref_ph,
-        ref_tds,
-        ref_ce
-    )
+    # =================================================
+    # CONTROL DE LOTES
+    # =================================================
 
     reading_counter += 1
 
@@ -116,8 +168,10 @@ while True:
 
         reading_counter = 0
 
+    # =================================================
+    # GUARDAR ALERTAS
+    # =================================================
 
-    # Guardar alertas si existen
     if alerts:
 
         print("\n⚠ ANOMALÍAS DETECTADAS:")
