@@ -116,3 +116,53 @@ def dashboard():
         "lote_actual": lot[0],
         "fecha": str(reading[4])
     }
+
+
+@app.route("/api/fulldata")
+def fulldata():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""SELECT * FROM lecturas ORDER BY id ASC""")
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return {
+        "lecturas": [
+            {
+                "1-id": row[0],
+                "2-fecha": row[1],
+                "3-ph": row[2],
+                "4-tds": row[3],
+                "5-ce": row[4],
+                "6-temperatura": row[5],
+                "7-lote_id": row[6]
+            }
+            for row in data
+        ]
+    }
+
+@app.route("/api/fullalerts")
+def fullalerts():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""SELECT * FROM alertas ORDER BY id ASC""")
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return {
+        "reportes": [
+            {
+                "1-id": row[0],
+                "2-lectura_id": row[1],
+                "3-tipo": row[2],
+                "4-mensaje": row[3],
+                "5-gravedad": row[4],
+                "6-fecha": str(row[5])
+            }
+            for row in data
+        ]
+    }
