@@ -189,4 +189,4 @@ while True:
 
         print("Sin anomalías")
 
-    time.sleep(60)
+    time.sleep(5)
