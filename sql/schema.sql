@@ -50,9 +50,7 @@ CREATE TABLE lotes (
 
     decision VARCHAR(20) DEFAULT NULL,
 
-    observaciones TEXT,
-
-    calidad_lote VARCHAR(20) NULL
+    observaciones TEXT
 );
 
 -- =====================================
