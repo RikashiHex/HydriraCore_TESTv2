@@ -21,6 +21,10 @@ def read_data():
             line.split(",")
         )
 
+        print(
+            f"Lectura recibida: ph={ph}, tds={tds}, ce={ce}, temp={temp}"
+        )
+
         return {
             "ph": ph,
             "tds": tds,
