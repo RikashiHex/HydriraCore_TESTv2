@@ -21,9 +21,9 @@ def calculate_filter_health(
         ce_error
     ) / 3
 
-    wear_amount = wear_score * 2
+    wear_amount = wear_score * 0.1
 
-    wear_amount += anomaly_count * 0.5
+    wear_amount += anomaly_count * 0.005
 
     health = previous_health - wear_amount
 
