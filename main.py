@@ -1,6 +1,7 @@
 import time
 
 from simulator import read_data
+from serial_reader import read_data
 
 from database import (
     create_lot,
