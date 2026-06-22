@@ -2,8 +2,8 @@ import serial
 from config.config import *
 
 ser = serial.Serial(
-    SERIAL_PORT,
-    BAUDRATE,
+    "COM4",
+    9600,
     timeout=1
 )
 

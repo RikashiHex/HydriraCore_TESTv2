@@ -1,6 +1,6 @@
 import time
 
-from simulator import read_data
+#from simulator import read_data
 from serial_reader import read_data
 
 from database import (
@@ -190,4 +190,4 @@ while True:
 
         print("Sin anomalías")
 
-    time.sleep(5)
+    time.sleep(10)
